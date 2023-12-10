@@ -1,0 +1,27 @@
+1. DL-Image-Classification/weights/resnet50_weights_torch_epoch13.pth 
+model:
+class ResNet50Modified(nn.Module):
+    def __init__(self, num_classes=100):
+        super(ResNet50Modified, self).__init__()
+        resnet = resnet50(pretrained=False)
+        self.custom_conv = nn.Conv2d(3, 64, kernel_size=9, stride=1, padding=0)
+        self.features = nn.Sequential(*list(resnet.children())[4:-2])
+        self.avgpool = resnet.avgpool
+        self.fc = nn.Linear(2048, num_classes)
+
+    def forward(self, x):
+        x = x.permute(0, 3, 2, 1)
+        x = self.custom_conv(x)
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+
+    -> batch_size = 32
+    -> criterion = nn.CrossEntropyLoss()
+    -> optimizer = optim.Adam(model.parameters(), lr=0.001)
+    -> on epoch 13+5:
+        -> 62,62 f1 on validation data
+        -> 91 on train data
+        -> 87,62 / 62 on train/val data during training
